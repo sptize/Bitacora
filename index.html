@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Bitácora Dev</title>
+  <meta name="description" content="Diario digital para ingenieros de software: registros, bugs, decisiones, ideas y snippets, guardados en tu dispositivo.">
+  <meta name="theme-color" content="#A8D5BA">
+
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/icon-32.png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Bitácora">
+
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- Iconos SVG inline (sin recursos externos) -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+    <defs>
+      <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+      <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M16 16l4.5 4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+      <symbol id="i-back" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+      <symbol id="i-edit" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16v4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
+      <symbol id="i-trash" viewBox="0 0 24 24"><path d="M5 7h14M10 7V5h4v2M7 7l1 12h8l1-12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+      <symbol id="i-save" viewBox="0 0 24 24"><path d="M5 5h11l3 3v11H5V5z M8 5v5h7V5 M8 19v-5h8v5" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
+      <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 4v11M7 11l5 5 5-5M5 20h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+      <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 16V5M7 9l5-5 5 5M5 20h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+      <symbol id="i-install" viewBox="0 0 24 24"><rect x="7" y="3" width="10" height="18" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 8v6M9.5 12l2.5 2.5 2.5-2.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+      <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M19 11a7 7 0 0 0-12.5-3.5L4 10M4 5v5h5M5 13a7 7 0 0 0 12.5 3.5L20 14M20 19v-5h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+      <symbol id="i-menu" viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="12" cy="19" r="1.6" fill="currentColor"/></symbol>
+      <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+      <symbol id="i-notebook" viewBox="0 0 48 48"><rect x="10" y="6" width="28" height="36" rx="3" fill="none" stroke="currentColor" stroke-width="2.5"/><path d="M17 6v36M23 16h9M23 23h9M23 30h6" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></symbol>
+    </defs>
+  </svg>
+
+  <a class="skip-link" href="#main">Saltar al contenido</a>
+
+  <!-- Error crítico: IndexedDB no disponible -->
+  <div id="db-error" class="fatal" role="alert" hidden>
+    <h2>No se puede guardar en este navegador</h2>
+    <p id="db-error-text">IndexedDB no está disponible. Prueba con otro navegador o desactiva el modo privado.</p>
+  </div>
+
+  <div id="app">
+
+    <!-- Cabecera tipo portada de cuaderno -->
+    <header class="cover" id="cover">
+      <div class="cover-row">
+        <h1 class="cover-title">Bitácora Dev</h1>
+        <div class="cover-actions">
+          <button type="button" id="btn-install" class="btn btn-ghost btn-icon-text" hidden>
+            <svg class="icon" aria-hidden="true"><use href="#i-install"/></svg>
+            <span>Instalar app</span>
+          </button>
+          <details class="menu" id="menu">
+            <summary class="btn btn-ghost btn-icon" aria-label="Más opciones">
+              <svg class="icon" aria-hidden="true"><use href="#i-menu"/></svg>
+            </summary>
+            <div class="menu-panel">
+              <button type="button" id="btn-export" class="menu-item">
+                <svg class="icon" aria-hidden="true"><use href="#i-download"/></svg>
+                <span>Exportar copia (JSON)</span>
+              </button>
+              <button type="button" id="btn-import" class="menu-item">
+                <svg class="icon" aria-hidden="true"><use href="#i-upload"/></svg>
+                <span>Importar copia (JSON)</span>
+              </button>
+              <button type="button" id="btn-update" class="menu-item">
+                <svg class="icon" aria-hidden="true"><use href="#i-refresh"/></svg>
+                <span>Actualizar aplicación</span>
+              </button>
+            </div>
+          </details>
+        </div>
+      </div>
+      <p class="cover-meta">
+        <span id="today-label"></span>
+        <span class="sep" aria-hidden="true"></span>
+        <span id="entry-count">0 entradas</span>
+      </p>
+      <div class="status-row">
+        <span id="conn-status" class="chip chip-online" role="status" aria-live="polite">En línea</span>
+        <span class="chip">Datos solo en este dispositivo</span>
+      </div>
+    </header>
+
+    <!-- Aviso de datos locales -->
+    <aside id="local-notice" class="notice" hidden>
+      <p>Tus entradas se guardan únicamente en este dispositivo. Si borras los datos del navegador o desinstalas la app, se pierden. Descarga una copia de seguridad de vez en cuando.</p>
+      <div class="notice-actions">
+        <button type="button" id="notice-export" class="btn btn-small">Exportar ahora</button>
+        <button type="button" id="notice-close" class="btn btn-small btn-ghost">Entendido</button>
+      </div>
+    </aside>
+
+    <main id="main" tabindex="-1">
+
+      <!-- VISTA: lista -->
+      <section id="view-list" class="view" aria-label="Lista de entradas">
+        <div class="toolbar">
+          <div class="search">
+            <svg class="icon" aria-hidden="true"><use href="#i-search"/></svg>
+            <input type="search" id="search" placeholder="Buscar en título, texto, proyecto, tags o código" aria-label="Buscar entradas" autocomplete="off">
+          </div>
+          <div class="filters">
+            <label class="field-inline">
+              <span>Tipo</span>
+              <select id="filter-type" aria-label="Filtrar por tipo">
+                <option value="">Todos</option>
+              </select>
+            </label>
+            <label class="field-inline">
+              <span>Proyecto</span>
+              <select id="filter-project" aria-label="Filtrar por proyecto">
+                <option value="">Todos</option>
+              </select>
+            </label>
+            <button type="button" id="btn-clear-filters" class="btn btn-small btn-ghost" hidden>Limpiar</button>
+          </div>
+        </div>
+
+        <p id="results-info" class="results-info" aria-live="polite" hidden></p>
+
+        <ol id="entry-list" class="entry-list"></ol>
+
+        <!-- Estado vacío -->
+        <div id="empty-state" class="empty" hidden>
+          <svg class="empty-icon" aria-hidden="true"><use href="#i-notebook"/></svg>
+          <h2 id="empty-title">Tu bitácora está en blanco</h2>
+          <p id="empty-text">Anota lo que hiciste hoy, un bug que resolviste o una decisión que quieras recordar.</p>
+          <button type="button" id="empty-new" class="btn btn-primary">Escribir la primera entrada</button>
+        </div>
+      </section>
+
+      <!-- VISTA: detalle (visor) -->
+      <section id="view-detail" class="view" aria-label="Entrada" hidden>
+        <div class="page-bar">
+          <button type="button" id="detail-back" class="btn btn-ghost btn-icon-text">
+            <svg class="icon" aria-hidden="true"><use href="#i-back"/></svg>
+            <span>Volver</span>
+          </button>
+          <div class="page-bar-actions">
+            <button type="button" id="detail-edit" class="btn btn-icon-text">
+              <svg class="icon" aria-hidden="true"><use href="#i-edit"/></svg>
+              <span>Editar</span>
+            </button>
+            <button type="button" id="detail-delete" class="btn btn-danger btn-icon" aria-label="Eliminar entrada">
+              <svg class="icon" aria-hidden="true"><use href="#i-trash"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <article class="page" id="detail-page">
+          <header class="page-head">
+            <p class="page-number">Entrada <span id="detail-number">1</span></p>
+            <time id="detail-date" class="page-date"></time>
+          </header>
+          <h2 id="detail-title" class="page-title"></h2>
+          <p class="page-meta">
+            <span id="detail-type" class="tag tag-type"></span>
+            <span id="detail-project" class="page-project"></span>
+          </p>
+          <ul id="detail-tags" class="tag-list"></ul>
+
+          <div id="detail-content" class="page-text"></div>
+
+          <section id="detail-code-wrap" class="block" hidden>
+            <h3 class="block-title">Código</h3>
+            <pre class="code"><code id="detail-code"></code></pre>
+            <button type="button" id="detail-copy" class="btn btn-small">Copiar código</button>
+          </section>
+
+          <section id="detail-links-wrap" class="block" hidden>
+            <h3 class="block-title">Enlaces y referencias</h3>
+            <div id="detail-links" class="page-text"></div>
+          </section>
+
+          <footer class="page-foot">
+            <span id="detail-created"></span>
+            <span id="detail-updated"></span>
+          </footer>
+        </article>
+      </section>
+
+      <!-- VISTA: editor -->
+      <section id="view-editor" class="view" aria-label="Editor de entrada" hidden>
+        <form id="entry-form" class="editor" novalidate autocomplete="off">
+          <div class="page-bar">
+            <button type="button" id="editor-back" class="btn btn-ghost btn-icon-text">
+              <svg class="icon" aria-hidden="true"><use href="#i-back"/></svg>
+              <span>Cerrar</span>
+            </button>
+            <div class="page-bar-actions">
+              <span id="save-status" class="save-status" role="status" aria-live="polite"></span>
+              <button type="submit" id="btn-save" class="btn btn-primary btn-icon-text">
+                <svg class="icon" aria-hidden="true"><use href="#i-save"/></svg>
+                <span>Guardar</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="page page-editor">
+            <header class="page-head">
+              <p class="page-number">Entrada <span id="editor-number">1</span></p>
+              <label class="page-date-field">
+                <span class="visually-hidden">Fecha</span>
+                <input type="date" id="f-date" name="date" required>
+              </label>
+            </header>
+
+            <label class="field">
+              <span class="field-label">Título</span>
+              <input type="text" id="f-title" name="title" maxlength="140" placeholder="Qué pasó, en una línea" required>
+              <span class="field-error" id="err-title" hidden>Escribe un título para poder guardar.</span>
+            </label>
+
+            <div class="field-row">
+              <label class="field">
+                <span class="field-label">Tipo</span>
+                <select id="f-type" name="type"></select>
+              </label>
+              <label class="field">
+                <span class="field-label">Proyecto</span>
+                <input type="text" id="f-project" name="project" list="project-options" maxlength="80" placeholder="Nombre del proyecto">
+                <datalist id="project-options"></datalist>
+              </label>
+            </div>
+
+            <label class="field">
+              <span class="field-label">Tags <small>(separadas por coma)</small></span>
+              <input type="text" id="f-tags" name="tags" placeholder="api, performance, revisión">
+            </label>
+
+            <label class="field">
+              <span class="field-label">Notas</span>
+              <textarea id="f-content" name="content" rows="8" class="lined" placeholder="Contexto, qué probaste, qué decidiste y por qué…"></textarea>
+            </label>
+
+            <label class="field">
+              <span class="field-label">Snippet de código <small>(opcional)</small></span>
+              <textarea id="f-code" name="codeSnippet" rows="7" class="code-input" spellcheck="false" autocapitalize="off" autocorrect="off" placeholder="// pega aquí el código"></textarea>
+            </label>
+
+            <label class="field">
+              <span class="field-label">Enlaces <small>(opcional)</small></span>
+              <textarea id="f-links" name="links" rows="3" class="lined" placeholder="Un enlace o referencia por línea"></textarea>
+            </label>
+
+            <div class="editor-footer">
+              <button type="button" id="editor-delete" class="btn btn-danger btn-icon-text" hidden>
+                <svg class="icon" aria-hidden="true"><use href="#i-trash"/></svg>
+                <span>Eliminar entrada</span>
+              </button>
+              <p class="hint">Los cambios se guardan solos mientras escribes.</p>
+            </div>
+          </div>
+        </form>
+      </section>
+
+    </main>
+
+    <!-- Botón flotante: nueva entrada -->
+    <button type="button" id="fab-new" class="fab" aria-label="Nueva entrada">
+      <svg class="icon" aria-hidden="true"><use href="#i-plus"/></svg>
+      <span>Nueva entrada</span>
+    </button>
+  </div>
+
+  <!-- Diálogo de confirmación (reutilizable) -->
+  <dialog id="confirm-dialog" class="dialog" aria-labelledby="confirm-title">
+    <form method="dialog" class="dialog-body">
+      <h2 id="confirm-title">¿Eliminar entrada?</h2>
+      <p id="confirm-text">Esta acción no se puede deshacer.</p>
+      <div class="dialog-actions">
+        <button type="submit" value="cancel" id="confirm-cancel" class="btn btn-ghost">Cancelar</button>
+        <button type="submit" value="ok" id="confirm-ok" class="btn btn-danger">Eliminar</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Selector de archivo para importar -->
+  <input type="file" id="import-file" accept="application/json,.json" hidden>
+
+  <!-- Mensajes breves -->
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+  <noscript>
+    <p class="fatal">Bitácora Dev necesita JavaScript para funcionar.</p>
+  </noscript>
+
+  <script src="db.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
